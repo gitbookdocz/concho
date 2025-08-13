@@ -13,17 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js 12
+      - name: Set up Node.js 14
         uses: actions/setup-node@v4
         with:
-          node-version: '12'
+          node-version: '14'
           cache: 'npm'
 
-      - name: Print Node version (debug)
-        run: node -v
-
       - name: Install GitBook CLI locally
-        run: npm install gitbook-cli@2.3.2
+        run: npm install gitbook-cli
 
       - name: Install GitBook plugins
         run: npx gitbook install
