@@ -1,31 +1,31 @@
-name: Build and Deploy GitBook
+name: Build and Deploy HonKit
 
 on:
   push:
     branches:
-      - main  # change if your default branch is different
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 10
+      - name: Setup Node.js 16
         uses: actions/setup-node@v3
         with:
-          node-version: '10'
+          node-version: '16'
 
-      - name: Install GitBook CLI
-        run: npm install -g gitbook-cli
+      - name: Install HonKit
+        run: npm install -g honkit
 
-      - name: Install GitBook plugins
-        run: gitbook install
+      - name: Install plugins
+        run: honkit install
 
-      - name: Build GitBook site
-        run: gitbook build
+      - name: Build HonKit site
+        run: honkit build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
