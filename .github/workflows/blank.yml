@@ -1,29 +1,28 @@
 name: Build and Deploy HonKit
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 16
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '14'  # Downgraded from 18 to avoid graceful-fs issue
 
       - name: Install HonKit
-        run: npm install -g honkit
+        run: npm install -g gitbook-cli@2.3.2 honkit
 
-      - name: Install plugins
-        run: honkit install
+      - name: Install GitBook plugins
+        run: gitbook install
 
-      - name: Build static site
+      - name: Build the site with HonKit
         run: honkit build
 
       - name: Deploy to GitHub Pages
