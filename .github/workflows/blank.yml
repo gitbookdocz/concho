@@ -1,29 +1,32 @@
-name: Build and Deploy HonKit
+name: Build and Deploy GitBook
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # ✅ Enables the "Run workflow" button
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Downgraded from 18 to avoid graceful-fs issue
+          node-version: '10'
 
-      - name: Install HonKit
-        run: npm install -g gitbook-cli@2.3.2 honkit
+      - name: Install GitBook CLI
+        run: npm install -g gitbook-cli
 
       - name: Install GitBook plugins
         run: gitbook install
 
-      - name: Build the site with HonKit
-        run: honkit build
+      - name: Build GitBook site
+        run: gitbook build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
