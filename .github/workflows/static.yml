@@ -22,14 +22,14 @@ jobs:
       - name: Print Node version (debug)
         run: node -v
 
-      - name: Install GitBook CLI globally
-        run: npm install -g gitbook-cli
+      - name: Install GitBook CLI locally
+        run: npm install gitbook-cli@2.3.2
 
       - name: Install GitBook plugins
-        run: gitbook install
+        run: npx gitbook install
 
       - name: Build GitBook site
-        run: gitbook build
+        run: npx gitbook build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
