@@ -3,24 +3,22 @@ name: Build & Deploy GitBook
 on:
   push:
     branches:
-      - main  # or your default branch
-  workflow_dispatch:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Use Node.js 14
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '14'
 
       - name: Install GitBook CLI
-        run: npm install gitbook-cli -g
+        run: npm install -g gitbook-cli
 
       - name: Install GitBook plugins
         run: gitbook install
