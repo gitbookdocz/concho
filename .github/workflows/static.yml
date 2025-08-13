@@ -3,7 +3,7 @@ name: Build and Deploy GitBook
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main  # Change to your default branch if different
 
 jobs:
   build:
@@ -13,19 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js 14
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-
-      - name: Install GitBook CLI locally
-        run: npm install gitbook-cli
-
-      - name: Install GitBook plugins
-        run: npx gitbook install
-
-      - name: Build GitBook site
-        run: npx gitbook build
+      - name: Build GitBook site using Docker (Node 14)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:14 bash -c "
+            npm install -g gitbook-cli &&
+            gitbook install &&
+            gitbook build
+          "
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
