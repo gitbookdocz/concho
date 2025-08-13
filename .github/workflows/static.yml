@@ -3,7 +3,7 @@ name: Build and Deploy HonKit
 on:
   push:
     branches:
-      - main
+      - main  # or your default branch
 
 jobs:
   build:
