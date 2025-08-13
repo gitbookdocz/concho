@@ -1,0 +1,35 @@
+name: Build and Deploy GitBook
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # ✅ Enables the "Run workflow" button
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 10
+        uses: actions/setup-node@v3
+        with:
+          node-version: '10'
+
+      - name: Install GitBook CLI
+        run: npm install -g gitbook-cli
+
+      - name: Install GitBook plugins
+        run: gitbook install
+
+      - name: Build GitBook site
+        run: gitbook build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_book
