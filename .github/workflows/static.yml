@@ -3,14 +3,13 @@ name: Build and Deploy HonKit
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Setup Node.js 16
@@ -24,7 +23,7 @@ jobs:
       - name: Install plugins
         run: honkit install
 
-      - name: Build HonKit site
+      - name: Build static site
         run: honkit build
 
       - name: Deploy to GitHub Pages
