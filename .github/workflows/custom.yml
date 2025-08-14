@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # ✅ Enables the "Run workflow" button
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,10 +17,17 @@ jobs:
       - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '10'
+          node-version: '10'  # Explicitly uses Node 10 for GitBook compatibility
 
       - name: Install GitBook CLI
-        run: npm install -g gitbook-cli
+        run: |
+          npm install -g gitbook-cli
+          gitbook fetch 3.2.3  # Explicitly install GitBook 3.2.3 (stable with Node 10)
+
+      - name: Fix hint tags automatically  # 👈 Replaces unsupported hint tags
+        run: |
+          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> **Note**: /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
 
       - name: Install GitBook plugins
         run: gitbook install
