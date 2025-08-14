@@ -36,7 +36,6 @@ jobs:
               }
             }
           }' > book.json
-
           # Create exact GitBook.io styling
           mkdir -p styles
           cat << 'EOF' > styles/website.css
@@ -64,7 +63,7 @@ jobs:
       - name: Convert all legacy syntax
         run: |
           # 1. Convert embed tags to simple links
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% embed url="\$[^"]*\$" %}/[View Content](\1)/g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
           
           # 2. Convert hint tags to emoji blocks
@@ -75,11 +74,11 @@ jobs:
           # 3. Remove unsupported icon syntax
           find . -name "*.md" -exec sed -i 's/icon:[a-z-]*//g' {} \;
 
-      - name: Build and deploy
+      - name: Build the GitBook
         run: |
           gitbook install
           gitbook build
-          
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
