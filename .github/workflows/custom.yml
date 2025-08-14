@@ -30,18 +30,11 @@ jobs:
           find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> **Note**: /g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
 
-      # Fix embed tags (choose ONE of these)
-      # Option 1: Install plugin
-      - name: Install embed plugin
+      # Convert embed tags to links
+      - name: Fix embed tags
         run: |
-          npm install gitbook-plugin-embed --save-dev
-          echo '{"plugins": ["embed"]}' > book.json
-      
-      # OR Option 2: Replace embed tags
-      # - name: Fix embed tags
-      #   run: |
-      #     find . -name "*.md" -exec sed -i 's/{% embed url="\(.*\)" %}/[Embedded Content](\1)/g' {} \;
-      #     find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
 
       - name: Install GitBook plugins
         run: gitbook install
