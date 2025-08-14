@@ -17,69 +17,69 @@ jobs:
         with:
           node-version: '10'
 
-      - name: Install GitBook and dependencies
+      - name: Install dependencies
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install gitbook-plugin-hints gitbook-plugin-theme-comscore --save
+          npm install gitbook-plugin-hints --save
 
-      - name: Setup GitBook configuration
+      - name: Setup configuration
         run: |
-          # Create minimal book.json without github plugin
-          echo '{
-            "plugins": ["hints", "theme-comscore"],
+          # Create valid book.json
+          cat << 'EOF' > book.json
+          {
+            "title": "Your Documentation",
+            "plugins": ["hints", "search", "fontsettings"],
             "pluginsConfig": {
               "hints": {
-                "info": "💡",
+                "info": "ℹ️",
                 "warning": "⚠️",
                 "danger": "❌"
               }
             }
-          }' > book.json
-          # Create exact GitBook.io styling
-          mkdir -p styles
-          cat << 'EOF' > styles/website.css
-          /* Exact GitBook.io sidebar styling */
-          .book .book-summary {
-            width: 300px;
-            background: #f7f7f7;
-            border-right: 1px solid #eaeaea;
-          }
-          
-          /* GitBook.io icon styling */
-          .book .book-summary ul.summary li a:before {
-            content: "•";
-            margin-right: 10px;
-            color: #7e888b;
-          }
-          
-          /* Content area matching GitBook.io */
-          .book .book-body {
-            color: #3c484e;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
           }
           EOF
 
-      - name: Convert all legacy syntax
-        run: |
-          # 1. Convert embed tags to simple links
-          find . -name "*.md" -exec sed -i 's/{% embed url="\$[^"]*\$" %}/[View Content](\1)/g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
-          
-          # 2. Convert hint tags to emoji blocks
-          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/💡 /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% hint style="warning" %}/⚠️ /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
-          
-          # 3. Remove unsupported icon syntax
-          find . -name "*.md" -exec sed -i 's/icon:[a-z-]*//g' {} \;
+          # Create custom styling
+          mkdir -p .gitbook
+          cat << 'EOF' > .gitbook/website.css
+          /* GitBook.io exact styling */
+          .book .book-summary {
+            width: 300px;
+            background: #f7f7f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          }
+          .book .book-summary li a:before {
+            content: "•";
+            color: #7e888b;
+            margin-right: 10px;
+          }
+          EOF
 
-      - name: Build the GitBook
+      - name: Apply all content fixes
+        run: |
+          # 1. Fix hint tags → emoji
+          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/ℹ️ /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% hint style="warning" %}/⚠️ /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% hint style="danger" %}/❌ /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
+
+          # 2. Convert embed → iframe
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/<iframe src="\1" width="100%" height="500px" frameborder="0"><\/iframe>/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+
+          # 3. Replace icons with emoji
+          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]*\)/🔹 /g' {} \;
+
+          # 4. Fix YAML in markdown files
+          find . -name "*.md" -exec sed -i 's/^cover: /cover: /g' {} \;
+
+      - name: Build site
         run: |
           gitbook install
           gitbook build
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
