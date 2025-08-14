@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # ✅ Enables the "Run workflow" button
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,24 +12,37 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js 10
-        uses: actions/setup-node@v3
+      - name: Setup Node.js 16
+        uses: actions/setup-node@v4
         with:
-          node-version: '10'
+          node-version: '16'
+          cache: 'npm'
 
       - name: Install GitBook CLI
-        run: npm install -g gitbook-cli
+        run: |
+          npm install -g gitbook-cli
+          gitbook --version
 
       - name: Install GitBook plugins
-        run: gitbook install
+        run: |
+          gitbook install
+          # Install additional plugins if needed
+          npm install -g gitbook-plugin-hints
+          npm install -g gitbook-plugin-callouts
+          npm install -g gitbook-plugin-alerts
 
       - name: Build GitBook site
-        run: gitbook build
+        run: |
+          gitbook build . ./_book
+          
+      - name: List build output
+        run: ls -la ./_book
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_book
+          force_orphan: true
