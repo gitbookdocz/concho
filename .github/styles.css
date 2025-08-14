@@ -1,0 +1,22 @@
+/* GitHub Octicons styling */
+.book .book-summary ul.summary li i {
+  display: inline-block !important;
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+/* Sidebar fixes */
+.book .book-summary {
+  width: 300px;
+  background: #f7f7f7;
+}
+
+/* Hint boxes styling */
+.book .alert-info {
+  border-left: 4px solid #0366d6;
+}
+.book .alert-info:before {
+  font-family: octicons;
+  content: "\f059";
+  color: #0366d6;
+}
