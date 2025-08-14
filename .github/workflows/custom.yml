@@ -12,39 +12,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '10' # Updated from Node 10 which is deprecated
+          node-version: '10.x'  # GitBook CLI requires Node 10
 
-      - name: Install dependencies
+      - name: Install GitBook and dependencies
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install replace-in-file --save-dev
-          npm install @fortawesome/fontawesome-free --save-dev
+          npm install replace-in-file@5.0.2 --save-dev  # Older version compatible with Node 10
+          npm install @fortawesome/fontawesome-free@5.15.4 --save-dev  # Version compatible with Node 10
 
-      - name: Set up FontAwesome and custom styles
+      - name: Set up FontAwesome
         run: |
-          # Create custom CSS directory
           mkdir -p .gitbook/styles
-          
-          # Copy FontAwesome CSS
           cp node_modules/@fortawesome/fontawesome-free/css/all.min.css .gitbook/styles/
-          
-          # Create custom CSS file
           echo '@import "styles/all.min.css";' > .gitbook/website.css
           echo 'i.fas { margin-right: 5px; }' >> .gitbook/website.css
 
       - name: Replace icon patterns
         run: |
-          # Replace icon patterns with FontAwesome icons
           npx replace-in-file \
             --files="**/*.md" \
             --from='icon:([a-z-]+)' \
             --to='<i class="fas fa-$1"></i>'
           
-          # Additional common replacements
           npx replace-in-file \
             --files="**/*.md" \
             --from='icon-projector' \
