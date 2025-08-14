@@ -15,14 +15,14 @@ jobs:
       - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '10.x'  # GitBook CLI requires Node 10
+          node-version: '10.x'
 
       - name: Install GitBook and dependencies
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install replace-in-file@5.0.2 --save-dev  # Older version compatible with Node 10
-          npm install @fortawesome/fontawesome-free@5.15.4 --save-dev  # Version compatible with Node 10
+          npm install replace-in-file@5.0.2 --save-dev
+          npm install @fortawesome/fontawesome-free@5.15.4 --save-dev
 
       - name: Set up FontAwesome
         run: |
@@ -33,15 +33,23 @@ jobs:
 
       - name: Replace icon patterns
         run: |
-          npx replace-in-file \
-            --files="**/*.md" \
-            --from='icon:([a-z-]+)' \
-            --to='<i class="fas fa-$1"></i>'
+          # Create a temporary config file for the first replacement
+          echo '{
+            "files": "**/*.md",
+            "from": "icon:([a-z-]+)",
+            "to": "<i class=\"fas fa-$1\"></i>"
+          }' > replace-config.json
           
-          npx replace-in-file \
-            --files="**/*.md" \
-            --from='icon-projector' \
-            --to='<i class="fas fa-projector"></i>'
+          npx replace-in-file --configFile=replace-config.json
+          
+          # Create a temporary config file for the second replacement
+          echo '{
+            "files": "**/*.md",
+            "from": "icon-projector",
+            "to": "<i class=\"fas fa-projector\"></i>"
+          }' > replace-config-projector.json
+          
+          npx replace-in-file --configFile=replace-config-projector.json
 
       - name: Configure GitBook
         run: |
@@ -65,6 +73,7 @@ jobs:
         run: |
           gitbook install
           gitbook build
+          touch _book/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
