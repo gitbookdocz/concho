@@ -11,70 +11,449 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+        
       - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '10.x'
-
-      - name: Install GitBook and dependencies
+          node-version: '10'
+          
+      - name: Install specific GitBook version
         run: |
           npm install -g gitbook-cli
-          gitbook fetch 3.2.3
-          npm install replace-in-file@5.0.2 --save-dev
-          npm install @fortawesome/fontawesome-free@5.15.4 --save-dev
-
-      - name: Set up FontAwesome
-        run: |
-          mkdir -p .gitbook/styles
-          cp node_modules/@fortawesome/fontawesome-free/css/all.min.css .gitbook/styles/
-          echo '@import "styles/all.min.css";' > .gitbook/website.css
-          echo 'i.fas { margin-right: 5px; }' >> .gitbook/website.css
-
-      - name: Replace icon patterns
-        run: |
-          # Create a temporary config file for the first replacement
-          echo '{
-            "files": "**/*.md",
-            "from": "icon:([a-z-]+)",
-            "to": "<i class=\"fas fa-$1\"></i>"
-          }' > replace-config.json
+          gitbook fetch 3.2.2 # Using stable version instead of 3.2.3
+          npm uninstall gitbook-plugin-search --save # Remove problematic plugin
           
-          npx replace-in-file --configFile=replace-config.json
-          
-          # Create a temporary config file for the second replacement
-          echo '{
-            "files": "**/*.md",
-            "from": "icon-projector",
-            "to": "<i class=\"fas fa-projector\"></i>"
-          }' > replace-config-projector.json
-          
-          npx replace-in-file --configFile=replace-config-projector.json
-
-      - name: Configure GitBook
+      - name: Create clean configuration
         run: |
+          # Enhanced configuration with better plugins
           cat << 'EOF' > book.json
           {
-            "plugins": ["hints"],
+            "title": "Your Documentation",
+            "plugins": [
+              "-search", 
+              "hints", 
+              "fontsettings",
+              "theme-default",
+              "-highlight",
+              "prism"
+            ],
             "pluginsConfig": {
               "hints": {
                 "info": "ℹ️",
-                "warning": "⚠️",
+                "warning": "⚠️", 
                 "danger": "❌"
+              },
+              "theme-default": {
+                "showLevel": true
               }
-            },
-            "styles": {
-              "website": "styles/website.css"
             }
           }
           EOF
-
-      - name: Build GitBook
+          # Fix README.md YAML
+          sed -i '1s/^/---\ntitle: Documentation\n---\n/' README.md
+          [ -f .gitbook/assets/Xcop.jpg ] && echo 'cover: .gitbook/assets/Xcop.jpg' >> README.md
+          
+      - name: Apply content transformations
+        run: |
+          # 1. Convert all embeds to links
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+          # 2. Convert hints to simple callouts
+          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
+          
+      - name: Add GitBook.io styling with icon fixes
+        run: |
+          mkdir -p styles
+          cat << 'EOF' > styles/website.css
+          /* Import Font Awesome */
+          @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+          
+          /* GitBook.io exact styling */
+          .book {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+          }
+          
+          .book .book-summary {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 300px;
+            background: #fafafa;
+            border-right: 1px solid #e7e7e7;
+            overflow-y: auto;
+            z-index: 1;
+            font-size: 14px;
+            color: #364149;
+          }
+          
+          .book .book-summary ul.summary {
+            list-style: none;
+            margin: 0;
+            padding: 20px 0;
+          }
+          
+          .book .book-summary li {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+          }
+          
+          .book .book-summary li a {
+            display: block;
+            padding: 8px 20px;
+            color: #364149;
+            text-decoration: none;
+            line-height: 1.4;
+            border-bottom: none;
+            transition: all 0.2s ease;
+            position: relative;
+          }
+          
+          .book .book-summary li a:hover {
+            background-color: #f3f3f3;
+            color: #008cff;
+          }
+          
+          .book .book-summary li.active > a {
+            color: #008cff;
+            background-color: #f3f3f3;
+            font-weight: 600;
+          }
+          
+          .book .book-summary li a:before {
+            content: "";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            background-size: contain;
+            vertical-align: middle;
+          }
+          
+          /* Icon replacements */
+          .book .book-summary li a[href$=".html"]:before {
+            content: "\f15c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #7e888b;
+            width: auto;
+            height: auto;
+            background: none;
+          }
+          
+          .book .book-summary li.chapter a:before {
+            content: "\f02d";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #7e888b;
+            width: auto;
+            height: auto;
+            background: none;
+          }
+          
+          .book .book-summary li.part a:before {
+            content: "\f07b";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #7e888b;
+            width: auto;
+            height: auto;
+            background: none;
+          }
+          
+          /* Fix main content area */
+          .book .book-body {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 300px;
+            bottom: 0;
+            overflow-y: auto;
+            background: #fff;
+          }
+          
+          .book .book-body .body-inner {
+            position: relative;
+            min-height: 100%;
+            padding: 20px 40px 40px;
+            max-width: none;
+          }
+          
+          .book .book-body .navigation {
+            position: absolute;
+            top: 50%;
+            margin-top: -25px;
+            width: 40px;
+            height: 50px;
+            background: #fafafa;
+            border: 1px solid #e7e7e7;
+            border-radius: 4px;
+            text-align: center;
+            line-height: 50px;
+            color: #364149;
+            text-decoration: none;
+            font-size: 20px;
+          }
+          
+          .book .book-body .navigation:hover {
+            background: #f3f3f3;
+            color: #008cff;
+          }
+          
+          .book .book-body .navigation.navigation-prev {
+            left: 20px;
+          }
+          
+          .book .book-body .navigation.navigation-next {
+            right: 20px;
+          }
+          
+          /* Replace navigation icons */
+          .navigation.navigation-prev:before {
+            content: "\f104";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+          }
+          
+          .navigation.navigation-next:before {
+            content: "\f105"; 
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+          }
+          
+          /* Header styling */
+          .book .book-header {
+            overflow: visible;
+            height: 50px;
+            padding: 0 8px;
+            z-index: 2;
+            font-size: 12px;
+            color: #7e888b;
+            background: transparent;
+            border-bottom: 1px solid #e7e7e7;
+          }
+          
+          /* Responsive design */
+          @media (max-width: 1240px) {
+            .book .book-summary {
+              position: fixed;
+              left: -300px;
+              transition: left 0.25s ease;
+            }
+            
+            .book .book-summary.open {
+              left: 0;
+            }
+            
+            .book .book-body {
+              left: 0;
+            }
+            
+            .book .book-body .body-inner {
+              padding-top: 70px;
+            }
+          }
+          
+          /* Search styling */
+          .book .book-summary #book-search-input {
+            width: calc(100% - 40px);
+            margin: 20px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+          }
+          
+          /* Fix common GitBook icons */
+          .fa:before,
+          [class*="fa-"]:before {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+          }
+          
+          /* Content area improvements */
+          .markdown-section {
+            max-width: none;
+            padding: 0;
+          }
+          
+          .markdown-section h1,
+          .markdown-section h2,
+          .markdown-section h3,
+          .markdown-section h4,
+          .markdown-section h5,
+          .markdown-section h6 {
+            color: #2c3e50;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-top: 2em;
+            margin-bottom: 1em;
+          }
+          
+          .markdown-section h1 {
+            font-size: 2.2em;
+            border-bottom: 1px solid #e7e7e7;
+            padding-bottom: 0.3em;
+          }
+          
+          .markdown-section h2 {
+            font-size: 1.8em;
+            border-bottom: 1px solid #e7e7e7;
+            padding-bottom: 0.3em;
+          }
+          
+          .markdown-section code {
+            background: #f8f8f8;
+            border: 1px solid #e7e7e7;
+            border-radius: 3px;
+            padding: 2px 4px;
+            color: #e96900;
+            font-size: 0.85em;
+          }
+          
+          .markdown-section pre {
+            background: #f8f8f8;
+            border: 1px solid #e7e7e7;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+          }
+          
+          .markdown-section blockquote {
+            border-left: 4px solid #dfe2e5;
+            padding: 0 1em;
+            color: #6a737d;
+            margin: 1em 0;
+          }
+          
+          /* Hint styling to match GitBook.io */
+          .markdown-section blockquote {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            padding: 1em;
+            margin: 1em 0;
+          }
+          EOF
+          
+      - name: Add mobile menu script
+        run: |
+          mkdir -p assets
+          cat << 'EOF' > assets/mobile-menu.js
+          document.addEventListener('DOMContentLoaded', function() {
+            // Add mobile menu toggle
+            if (window.innerWidth <= 1240) {
+              const summary = document.querySelector('.book-summary');
+              const body = document.querySelector('.book-body');
+              
+              if (summary && body) {
+                // Create toggle button
+                const toggleBtn = document.createElement('button');
+                toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                toggleBtn.style.cssText = `
+                  position: fixed;
+                  top: 15px;
+                  left: 15px;
+                  z-index: 1001;
+                  background: #fff;
+                  border: 1px solid #ddd;
+                  padding: 8px 12px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                `;
+                
+                toggleBtn.onclick = function() {
+                  summary.classList.toggle('open');
+                };
+                
+                document.body.appendChild(toggleBtn);
+                
+                // Close sidebar when clicking outside
+                document.addEventListener('click', function(e) {
+                  if (!summary.contains(e.target) && 
+                      !toggleBtn.contains(e.target) && 
+                      summary.classList.contains('open')) {
+                    summary.classList.remove('open');
+                  }
+                });
+              }
+            }
+          });
+          EOF
+          
+      - name: Build and deploy
         run: |
           gitbook install
           gitbook build
-          touch _book/.nojekyll
-
+          
+      - name: Post-process HTML files (Icon fixes)
+        run: |
+          # Install Node.js 16 temporarily for post-processing
+          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          
+          # Create post-processing script
+          cat << 'EOF' > fix-icons.js
+          const fs = require('fs');
+          const path = require('path');
+          
+          function processHtmlFile(filePath) {
+            let html = fs.readFileSync(filePath, 'utf8');
+            
+            // Add Font Awesome to head if not present
+            if (!html.includes('font-awesome') && !html.includes('fontawesome')) {
+              html = html.replace(
+                '</head>',
+                '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\n    <script src="assets/mobile-menu.js"></script>\n</head>'
+              );
+            }
+            
+            // Replace common broken icons
+            html = html
+              .replace(/class="fa fa-/g, 'class="fas fa-')
+              .replace(/class="icon-/g, 'class="fas fa-')
+              .replace(/class="gitbook-/g, 'class="fas fa-')
+              .replace(/fa-check-square-o/g, 'fa-check-square')
+              .replace(/fa-square-o/g, 'fa-square')
+              .replace(/fa-file-text-o/g, 'fa-file-alt')
+              .replace(/fa-heart-o/g, 'fa-heart')
+              .replace(/fa-star-o/g, 'fa-star')
+              .replace(/fa-folder-o/g, 'fa-folder');
+            
+            fs.writeFileSync(filePath, html, 'utf8');
+          }
+          
+          function processDirectory(dir) {
+            const files = fs.readdirSync(dir);
+            
+            files.forEach(file => {
+              const fullPath = path.join(dir, file);
+              const stat = fs.statSync(fullPath);
+              
+              if (stat.isDirectory()) {
+                processDirectory(fullPath);
+              } else if (path.extname(file) === '.html') {
+                console.log('Processing:', fullPath);
+                processHtmlFile(fullPath);
+              }
+            });
+          }
+          
+          // Copy mobile menu script
+          fs.copyFileSync('./assets/mobile-menu.js', './_book/assets/mobile-menu.js');
+          
+          // Process all HTML files
+          processDirectory('./_book');
+          console.log('Icon fixes applied successfully!');
+          EOF
+          
+          # Run the post-processing
+          node fix-icons.js
+          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
