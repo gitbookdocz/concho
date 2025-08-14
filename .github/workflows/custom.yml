@@ -12,42 +12,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 10
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '10'
+          node-version: '16' # Updated from Node 10 which is deprecated
 
-      - name: Install GitBook
+      - name: Install dependencies
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install replace-in-file --save
+          npm install replace-in-file --save-dev
+          npm install @fortawesome/fontawesome-free --save-dev
 
-      - name: Auto-replace icons with FontAwesome
+      - name: Set up FontAwesome and custom styles
         run: |
-          # Install FontAwesome CSS
-          mkdir -p .gitbook
-          echo '@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");' > .gitbook/website.css
+          # Create custom CSS directory
+          mkdir -p .gitbook/styles
+          
+          # Copy FontAwesome CSS
+          cp node_modules/@fortawesome/fontawesome-free/css/all.min.css .gitbook/styles/
+          
+          # Create custom CSS file
+          echo '@import "styles/all.min.css";' > .gitbook/website.css
+          echo 'i.fas { margin-right: 5px; }' >> .gitbook/website.css
 
-          # Replace all icon patterns
-          npx replace-in-file --configFile=<(echo '{
-            "files": "**/*.md",
-            "from": /icon:([a-z-]+)/g,
-            "to": "<i class=\"fas fa-$1\"></i>"
-          }')
-
+      - name: Replace icon patterns
+        run: |
+          # Replace icon patterns with FontAwesome icons
+          npx replace-in-file \
+            --files="**/*.md" \
+            --from='icon:([a-z-]+)' \
+            --to='<i class="fas fa-$1"></i>'
+          
           # Additional common replacements
-          npx replace-in-file --configFile=<(echo '{
-            "files": "**/*.md",
-            "from": [
-              /Icon: projector/g,
-              /icon-projector/g
-            ],
-            "to": [
-              "<i class=\"fas fa-projector\"></i>",
-              "<i class=\"fas fa-projector\"></i>"
-            ]
-          }')
+          npx replace-in-file \
+            --files="**/*.md" \
+            --from='icon-projector' \
+            --to='<i class="fas fa-projector"></i>'
 
       - name: Configure GitBook
         run: |
@@ -60,15 +61,18 @@ jobs:
                 "warning": "⚠️",
                 "danger": "❌"
               }
+            },
+            "styles": {
+              "website": "styles/website.css"
             }
           }
           EOF
 
-      - name: Build and deploy
+      - name: Build GitBook
         run: |
           gitbook install
           gitbook build
-          
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
