@@ -1,0 +1,10 @@
+{
+  "plugins": ["theme-default", "hints", "github", "sidebar-style"],
+  "pluginsConfig": {
+    "hints": {
+      "info": "octicon octicon-info",
+      "warning": "octicon octicon-alert",
+      "danger": "octicon octicon-stop"
+    }
+  }
+}
