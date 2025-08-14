@@ -21,55 +21,19 @@ jobs:
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install font-awesome gitbook-plugin-sidebar-style --save
+          npm install gitbook-plugin-advanced-emoji --save
 
-      - name: Setup GitBook configuration
+      - name: Auto-fix all content issues
         run: |
-          # Create book.json
-          cat << 'EOF' > book.json
-          {
-            "plugins": [
-              "theme-default",
-              "hints",
-              "sidebar-style",
-              "fontsettings",
-              "search"
-            ],
-            "pluginsConfig": {
-              "sidebar-style": {
-                "width": 300
-              },
-              "hints": {
-                "info": "fa fa-info-circle",
-                "warning": "fa fa-exclamation-triangle",
-                "danger": "fa fa-times-circle"
-              }
-            }
-          }
-          EOF
-
-          # Create custom CSS
-          mkdir -p styles
-          cat << 'EOF' > styles/website.css
-          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
-          .book .book-summary ul.summary li i {
-            display: inline-block !important;
-            width: 20px;
-            margin-right: 8px;
-          }
-          .book .book-summary {
-            background: #f7f7f7 !important;
-          }
-          EOF
-
-      - name: Fix content syntax
-        run: |
-          # Convert hint tags
+          # 1. Convert embed tags to iframes
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/<iframe src="\1" width="100%" height="500px"><\/iframe>/g' {} \;
+          
+          # 2. Convert hint tags
           find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/::: tip/g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endhint %}/:::/g' {} \;
           
-          # Convert icons
-          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]\+\)/<i class="fa fa-\1"><\/i>/g' {} \;
+          # 3. Convert icons to emoji
+          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]\+\)/🔹/g' {} \;
 
       - name: Build and deploy
         run: |
