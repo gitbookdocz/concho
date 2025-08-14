@@ -12,74 +12,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Validate and fix YAML
+        run: |
+          # Fix README.md YAML
+          sed -i '1s/^/---\n/' README.md
+          sed -i '2s/^/title: Documentation\n/' README.md
+          sed -i '3s/^/cover: .gitbook\/assets\/Xcop.jpg\n/' README.md
+          sed -i '4s/^/---\n/' README.md
+
       - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
           node-version: '10'
 
-      - name: Install dependencies
+      - name: Install GitBook
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install gitbook-plugin-hints --save
 
-      - name: Setup configuration
+      - name: Fix content issues
         run: |
-          # Create valid book.json
-          cat << 'EOF' > book.json
-          {
-            "title": "Your Documentation",
-            "plugins": ["hints", "search", "fontsettings"],
-            "pluginsConfig": {
-              "hints": {
-                "info": "ℹ️",
-                "warning": "⚠️",
-                "danger": "❌"
-              }
-            }
-          }
-          EOF
-
-          # Create custom styling
-          mkdir -p .gitbook
-          cat << 'EOF' > .gitbook/website.css
-          /* GitBook.io exact styling */
-          .book .book-summary {
-            width: 300px;
-            background: #f7f7f7;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          }
-          .book .book-summary li a:before {
-            content: "•";
-            color: #7e888b;
-            margin-right: 10px;
-          }
-          EOF
-
-      - name: Apply all content fixes
-        run: |
-          # 1. Fix hint tags → emoji
-          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/ℹ️ /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% hint style="warning" %}/⚠️ /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% hint style="danger" %}/❌ /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
-
-          # 2. Convert embed → iframe
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/<iframe src="\1" width="100%" height="500px" frameborder="0"><\/iframe>/g' {} \;
+          # Fix embed tags
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[Embedded Content](\1)/g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
 
-          # 3. Replace icons with emoji
-          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]*\)/🔹 /g' {} \;
+          # Fix hint tags
+          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> **Note**: /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
 
-          # 4. Fix YAML in markdown files
-          find . -name "*.md" -exec sed -i 's/^cover: /cover: /g' {} \;
-
-      - name: Build site
+      - name: Build and deploy
         run: |
           gitbook install
           gitbook build
-
-      - name: Deploy
+          
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
