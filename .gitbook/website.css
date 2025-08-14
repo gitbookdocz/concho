@@ -1,0 +1,5 @@
+/* GitHub Octicons styling */
+.book .book-summary ul.summary li i {
+  display: inline-block !important;
+  margin-right: 8px;
+}
