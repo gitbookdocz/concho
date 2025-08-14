@@ -12,70 +12,103 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 10 (GitBook compatible)
+      - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
           node-version: '10'
-          cache: 'npm'
 
-      - name: Install GitBook (stable combination)
+      - name: Install GitBook with FontAwesome
         run: |
-          npm install -g gitbook-cli@2.3.2
-          gitbook fetch 3.2.2
-          # Install only essential plugins
-          npm install gitbook-plugin-hints@1.0.2 --save
+          npm install -g gitbook-cli
+          gitbook fetch 3.2.3
+          npm install gitbook-plugin-fontawesome --save
+          npm install replace-in-file --save
 
-      - name: Configure environment
+      - name: Auto-replace all icons
         run: |
-          # Create minimal config
+          # Install icon detection tools
+          sudo apt-get install -y python3 python3-pip
+          pip3 install beautifulsoup4
+
+          # Create auto-replacer script
+          cat << 'EOF' > icon_replacer.py
+          import os
+          import re
+          from bs4 import BeautifulSoup
+
+          def detect_and_replace(file_path):
+              with open(file_path, 'r+') as f:
+                  content = f.read()
+                  
+                  # Convert icon: syntax to <i> tags
+                  content = re.sub(
+                      r'icon:([a-z-]+)',
+                      r'<i class="fas fa-\1"></i>',
+                      content
+                  )
+                  
+                  # Update GitBook.io icon classes
+                  soup = BeautifulSoup(content, 'html.parser')
+                  for el in soup.find_all(class_=re.compile('icon-|fa-')):
+                      classes = el.get('class', [])
+                      new_classes = []
+                      for c in classes:
+                          if c.startswith('icon-'):
+                              new_classes.append('fas fa-' + c[5:])
+                          elif c.startswith('fa-'):
+                              new_classes.append('fas ' + c)
+                          else:
+                              new_classes.append(c)
+                      el['class'] = new_classes
+                  
+                  f.seek(0)
+                  f.write(str(soup))
+                  f.truncate()
+
+          for root, _, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.md'):
+                      detect_and_replace(os.path.join(root, file))
+          EOF
+
+          # Run the replacer
+          python3 icon_replacer.py
+
+          # Fallback for simple replacements
+          npx replace-in-file --configFile=<(echo '{
+            "files": "**/*.md",
+            "from": /icon:([a-z-]+)/g,
+            "to": "<i class=\"fas fa-$1\"></i>"
+          }')
+
+      - name: Configure GitBook
+        run: |
           cat << 'EOF' > book.json
           {
-            "title": "Xoop Documentation",
-            "plugins": ["hints", "-search", "-lunr"],
+            "plugins": ["fontawesome", "hints"],
             "pluginsConfig": {
+              "fontawesome": {
+                "include": "all"
+              },
               "hints": {
-                "info": "📌",
-                "warning": "⚠️",
-                "danger": "❌"
+                "info": "fas fa-info-circle",
+                "warning": "fas fa-exclamation-triangle",
+                "danger": "fas fa-times-circle"
               }
             }
           }
           EOF
 
-          # Create CSS fixes (no external dependencies)
-          mkdir -p .gitbook
           cat << 'EOF' > .gitbook/website.css
-          /* GitBook.io exact styling */
-          .book .book-summary {
-            width: 300px !important;
-            background: #f7f7f7 !important;
-            font-family: -apple-system, sans-serif !important;
-          }
-          .book .book-summary li a:before {
-            content: "•";
-            color: #7e888b;
-            margin-right: 10px;
-          }
-          /* Projector icon replacement */
-          span.icon-projector:before {
-            content: "📽️";
-            margin-right: 5px;
+          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+          .book .book-summary ul.summary li i {
+            display: inline-block !important;
+            width: 20px;
+            margin-right: 8px;
           }
           EOF
 
-      - name: Transform content
-        run: |
-          # Replace icon markers with spans
-          find . -name "*.md" -exec sed -i 's/Icon: projector/<span class="icon-projector"><\/span>/g' {} \;
-          
-          # Fix cover path
-          find . -name "*.md" -exec sed -i 's/cover: gtbook\/assets\/Xoop\.jpg/cover: .gitbook\/assets\/Xoop.jpg/g' {} \;
-          
-          # Convert hints to simple blocks
-          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
-
-      - name: Build site
+      - name: Build and deploy
         run: |
           gitbook install
           gitbook build
