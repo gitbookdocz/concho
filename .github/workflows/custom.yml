@@ -17,62 +17,62 @@ jobs:
         with:
           node-version: '10'
 
-      - name: Install specific GitBook version
+      - name: Install GitBook with fixes
         run: |
           npm install -g gitbook-cli
-          gitbook fetch 3.2.2  # Using stable version instead of 3.2.3
-          npm uninstall gitbook-plugin-search --save  # Remove problematic plugin
+          gitbook fetch 3.2.3
+          npm install gitbook-plugin-fontawesome --save
 
-      - name: Create clean configuration
+      - name: Configure styling
         run: |
-          # Minimal stable configuration
+          # Create proper book.json
           cat << 'EOF' > book.json
           {
-            "title": "Your Documentation",
-            "plugins": ["-search", "hints", "fontsettings"],
+            "title": "Xoop Documentation",
+            "plugins": ["fontawesome", "hints", "-search", "theme-default"],
             "pluginsConfig": {
+              "fontawesome": {
+                "include": "all"
+              },
               "hints": {
-                "info": "ℹ️",
-                "warning": "⚠️",
-                "danger": "❌"
+                "info": "fa fa-info-circle",
+                "warning": "fa fa-exclamation-triangle",
+                "danger": "fa fa-times-circle"
               }
             }
           }
           EOF
 
-          # Fix README.md YAML
-          sed -i '1s/^/---\ntitle: Documentation\n---\n/' README.md
-          [ -f .gitbook/assets/Xcop.jpg ] && echo 'cover: .gitbook/assets/Xcop.jpg' >> README.md
-
-      - name: Apply content transformations
-        run: |
-          # 1. Convert all embeds to links
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
-
-          # 2. Convert hints to simple callouts
-          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
-
-      - name: Add GitBook.io styling
-        run: |
+          # Create CSS fixes
           mkdir -p .gitbook
           cat << 'EOF' > .gitbook/website.css
-          /* GitBook.io exact styling */
+          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+          
+          /* Sidebar styling */
           .book .book-summary {
             width: 300px;
             background: #f7f7f7;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           }
-          .book .book-summary li a {
-            padding-left: 15px;
-          }
-          .book .book-summary li a:before {
-            content: "•";
-            color: #7e888b;
+          
+          /* Icon styling */
+          .book .book-summary ul.summary li i {
+            display: inline-block !important;
+            width: 20px;
             margin-right: 10px;
+            font-family: 'Font Awesome 6 Free' !important;
+            font-weight: 900;
           }
           EOF
+
+      - name: Transform content
+        run: |
+          # Convert icon markers to FontAwesome
+          find . -name "*.md" -exec sed -i 's/icon:projector/<i class="fas fa-projector"><\/i>/g' {} \;
+          find . -name "*.md" -exec sed -i 's/icon:([a-z-]+)/<i class="fas fa-\1"><\/i>/g' {} \;
+          
+          # Fix cover line
+          find . -name "*.md" -exec sed -i 's/cover: gtbook\/assets\/Xoop\.jpg/cover: .gitbook\/assets\/Xoop.jpg/g' {} \;
 
       - name: Build and deploy
         run: |
