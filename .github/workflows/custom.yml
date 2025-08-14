@@ -12,69 +12,70 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 10
+      - name: Setup Node.js 10 (GitBook compatible)
         uses: actions/setup-node@v3
         with:
           node-version: '10'
+          cache: 'npm'
 
-      - name: Install GitBook with fixes
+      - name: Install GitBook (stable combination)
         run: |
-          npm install -g gitbook-cli
-          gitbook fetch 3.2.3
-          npm install gitbook-plugin-fontawesome --save
+          npm install -g gitbook-cli@2.3.2
+          gitbook fetch 3.2.2
+          # Install only essential plugins
+          npm install gitbook-plugin-hints@1.0.2 --save
 
-      - name: Configure styling
+      - name: Configure environment
         run: |
-          # Create proper book.json
+          # Create minimal config
           cat << 'EOF' > book.json
           {
             "title": "Xoop Documentation",
-            "plugins": ["fontawesome", "hints", "-search", "theme-default"],
+            "plugins": ["hints", "-search", "-lunr"],
             "pluginsConfig": {
-              "fontawesome": {
-                "include": "all"
-              },
               "hints": {
-                "info": "fa fa-info-circle",
-                "warning": "fa fa-exclamation-triangle",
-                "danger": "fa fa-times-circle"
+                "info": "📌",
+                "warning": "⚠️",
+                "danger": "❌"
               }
             }
           }
           EOF
 
-          # Create CSS fixes
+          # Create CSS fixes (no external dependencies)
           mkdir -p .gitbook
           cat << 'EOF' > .gitbook/website.css
-          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
-          
-          /* Sidebar styling */
+          /* GitBook.io exact styling */
           .book .book-summary {
-            width: 300px;
-            background: #f7f7f7;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            width: 300px !important;
+            background: #f7f7f7 !important;
+            font-family: -apple-system, sans-serif !important;
           }
-          
-          /* Icon styling */
-          .book .book-summary ul.summary li i {
-            display: inline-block !important;
-            width: 20px;
+          .book .book-summary li a:before {
+            content: "•";
+            color: #7e888b;
             margin-right: 10px;
-            font-family: 'Font Awesome 6 Free' !important;
-            font-weight: 900;
+          }
+          /* Projector icon replacement */
+          span.icon-projector:before {
+            content: "📽️";
+            margin-right: 5px;
           }
           EOF
 
       - name: Transform content
         run: |
-          # Convert icon markers to FontAwesome
-          find . -name "*.md" -exec sed -i 's/icon:projector/<i class="fas fa-projector"><\/i>/g' {} \;
-          find . -name "*.md" -exec sed -i 's/icon:([a-z-]+)/<i class="fas fa-\1"><\/i>/g' {} \;
+          # Replace icon markers with spans
+          find . -name "*.md" -exec sed -i 's/Icon: projector/<span class="icon-projector"><\/span>/g' {} \;
           
-          # Fix cover line
+          # Fix cover path
           find . -name "*.md" -exec sed -i 's/cover: gtbook\/assets\/Xoop\.jpg/cover: .gitbook\/assets\/Xoop.jpg/g' {} \;
+          
+          # Convert hints to simple blocks
+          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
 
-      - name: Build and deploy
+      - name: Build site
         run: |
           gitbook install
           gitbook build
