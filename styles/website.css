@@ -1,0 +1,207 @@
+/* Import Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+}
+
+.book {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Sidebar - Exact GitBook.io styling */
+.book .book-summary {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 300px !important;
+    height: 100vh !important;
+    background: #fafafa !important;
+    border-right: 1px solid #e7e7e7 !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    font-size: 14px !important;
+}
+
+.book .book-summary ul.summary {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.book .book-summary li {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.book .book-summary li a,
+.book .book-summary li span {
+    display: block !important;
+    padding: 10px 15px !important;
+    color: #364149 !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    font-weight: normal !important;
+    line-height: 1.7 !important;
+    position: relative !important;
+}
+
+.book .book-summary li a:hover {
+    background: rgba(0, 0, 0, 0.07) !important;
+    color: #000 !important;
+    text-decoration: none !important;
+}
+
+.book .book-summary li.active>a {
+    color: #008cff !important;
+    background: rgba(0, 140, 255, 0.1) !important;
+    font-weight: 600 !important;
+}
+
+/* Remove all default icons */
+.book .book-summary li a:before,
+.book .book-summary li span:before {
+    display: none !important;
+}
+
+/* Custom icon system - matching GitBook.io */
+.book .book-summary li[data-level="1"]>a:before,
+.book .book-summary li[data-level="1"]>span:before {
+    content: "\f15c" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 400 !important;
+    margin-right: 8px !important;
+    color: #7e888b !important;
+    font-size: 14px !important;
+    display: inline-block !important;
+    width: 16px !important;
+    text-align: center !important;
+}
+
+.book .book-summary li[data-level="2"]>a:before,
+.book .book-summary li[data-level="2"]>span:before {
+    content: "\f0f6" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 400 !important;
+    margin-right: 8px !important;
+    color: #7e888b !important;
+    font-size: 12px !important;
+    display: inline-block !important;
+    width: 16px !important;
+    text-align: center !important;
+}
+
+.book .book-summary li[data-level="3"]>a:before,
+.book .book-summary li[data-level="3"]>span:before {
+    content: "\f105" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    margin-right: 8px !important;
+    color: #7e888b !important;
+    font-size: 10px !important;
+    display: inline-block !important;
+    width: 16px !important;
+    text-align: center !important;
+}
+
+/* Chapter/Part specific icons */
+.book .book-summary li.chapter>a:before,
+.book .book-summary li.chapter>span:before {
+    content: "\f02d" !important;
+}
+
+.book .book-summary li.part>a:before,
+.book .book-summary li.part>span:before {
+    content: "\f07b" !important;
+}
+
+/* Content area */
+.book .book-body {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: 300px !important;
+    bottom: 0 !important;
+    overflow-y: auto !important;
+    background: #fff !important;
+}
+
+.book .book-body .body-inner {
+    position: relative !important;
+    min-height: 100vh !important;
+    padding: 40px !important;
+    max-width: none !important;
+}
+
+/* Navigation arrows - GitBook.io style */
+.book .book-body .navigation {
+    position: absolute !important;
+    top: 50% !important;
+    margin-top: -25px !important;
+    width: 40px !important;
+    height: 50px !important;
+    background: #fafafa !important;
+    border: 1px solid #e7e7e7 !important;
+    border-radius: 4px !important;
+    text-align: center !important;
+    line-height: 50px !important;
+    color: #ccc !important;
+    text-decoration: none !important;
+    font-size: 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.book .book-body .navigation:hover {
+    background: #f4f4f4 !important;
+    color: #008cff !important;
+    border-color: #008cff !important;
+}
+
+.book .book-body .navigation.navigation-prev {
+    left: 20px !important;
+}
+
+.book .book-body .navigation.navigation-next {
+    right: 20px !important;
+}
+
+.book .book-body .navigation.navigation-prev:before {
+    content: "\f104" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+}
+
+.book .book-body .navigation.navigation-next:before {
+    content: "\f105" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 1240px) {
+    .book .book-summary {
+        left: -300px !important;
+        transition: left 0.25s ease !important;
+    }
+
+    .book .book-summary.mobile-open {
+        left: 0 !important;
+    }
+
+    .book .book-body {
+        left: 0 !important;
+    }
+
+    .book .book-body .body-inner {
+        padding-top: 70px !important;
+    }
+
+    .book .book-body .navigation {
+        display: none !important;
+    }
+}
