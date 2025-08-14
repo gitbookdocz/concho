@@ -24,11 +24,58 @@ jobs:
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
 
+      # Setup GitBook styling and plugins
+      - name: Configure GitBook environment
+        run: |
+          # Create required directories
+          mkdir -p .gitbook
+          
+          # Install necessary plugins
+          npm install gitbook-plugin-github gitbook-plugin-sidebar-style gitbook-plugin-hints
+          
+          # Create book.json configuration
+          echo '{
+            "plugins": [
+              "theme-default",
+              "hints",
+              "github",
+              "sidebar-style",
+              "fontsettings",
+              "search"
+            ],
+            "pluginsConfig": {
+              "hints": {
+                "info": "octicon octicon-info",
+                "warning": "octicon octicon-alert",
+                "danger": "octicon octicon-stop"
+              }
+            }
+          }' > book.json
+          
+          # Copy custom CSS
+          echo '/* GitHub Octicons styling */
+          .book .book-summary ul.summary li i {
+            display: inline-block !important;
+            margin-right: 8px;
+            font-size: 14px;
+          }
+          
+          /* Sidebar fixes */
+          .book .book-summary {
+            width: 300px;
+            background: #f7f7f7;
+          }
+          
+          /* Hint boxes styling */
+          .book .alert-info {
+            border-left: 4px solid #0366d6;
+          }' > .gitbook/website.css
+
       # Fix hint tags
       - name: Fix hint tags
         run: |
-          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> **Note**: /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/::: tip/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}/:::/g' {} \;
 
       # Convert embed tags to links
       - name: Fix embed tags
