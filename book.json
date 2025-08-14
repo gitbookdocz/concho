@@ -1,10 +1,17 @@
 {
-  "plugins": ["theme-default", "hints", "github", "sidebar-style"],
+  "title": "Documentation",
+  "plugins": [
+    "-search", 
+    "fontsettings", 
+    "theme-default",
+    "-highlight",
+    "prism"
+  ],
   "pluginsConfig": {
-    "hints": {
-      "info": "octicon octicon-info",
-      "warning": "octicon octicon-alert",
-      "danger": "octicon octicon-stop"
+    "fontsettings": {
+      "theme": "white",
+      "family": "sans",
+      "size": 2
     }
   }
 }
