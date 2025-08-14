@@ -2,14 +2,12 @@ name: Build and Deploy GitBook
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -19,64 +17,65 @@ jobs:
         with:
           node-version: '10'
 
-      - name: Install GitBook CLI
+      - name: Install GitBook and dependencies
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
+          npm install font-awesome gitbook-plugin-sidebar-style --save
 
-      # Setup GitBook configuration
-      - name: Configure GitBook
+      - name: Setup GitBook configuration
         run: |
-          # Create book.json with proper github plugin config
-          echo '{
+          # Create book.json
+          cat << 'EOF' > book.json
+          {
             "plugins": [
               "theme-default",
               "hints",
-              "github",
               "sidebar-style",
               "fontsettings",
-              "search",
-              "highlight",
-              "lunr",
-              "sharing"
+              "search"
             ],
             "pluginsConfig": {
-              "github": {
-                "url": "https://github.com/YOUR_USERNAME/YOUR_REPO"
+              "sidebar-style": {
+                "width": 300
               },
               "hints": {
-                "info": "octicon octicon-info",
-                "warning": "octicon octicon-alert",
-                "danger": "octicon octicon-stop"
+                "info": "fa fa-info-circle",
+                "warning": "fa fa-exclamation-triangle",
+                "danger": "fa fa-times-circle"
               }
             }
-          }' > book.json
-          
+          }
+          EOF
+
           # Create custom CSS
-          mkdir -p .gitbook
-          echo '/* GitHub Octicons styling */
+          mkdir -p styles
+          cat << 'EOF' > styles/website.css
+          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css");
           .book .book-summary ul.summary li i {
             display: inline-block !important;
+            width: 20px;
             margin-right: 8px;
-          }' > .gitbook/website.css
+          }
+          .book .book-summary {
+            background: #f7f7f7 !important;
+          }
+          EOF
 
-      # Fix content tags
-      - name: Fix hint tags
+      - name: Fix content syntax
         run: |
+          # Convert hint tags
           find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/::: tip/g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endhint %}/:::/g' {} \;
+          
+          # Convert icons
+          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]\+\)/<i class="fa fa-\1"><\/i>/g' {} \;
 
-      - name: Fix embed tags
+      - name: Build and deploy
         run: |
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
-
-      - name: Install plugins
-        run: gitbook install
-
-      - name: Build site
-        run: gitbook build
-
+          gitbook install
+          gitbook build
+          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
