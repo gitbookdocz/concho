@@ -1,0 +1,271 @@
+/* Import Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+/* GitBook.io exact styling */
+.book {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.book .book-summary {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  background: #fafafa;
+  border-right: 1px solid #e7e7e7;
+  overflow-y: auto;
+  z-index: 1;
+  font-size: 14px;
+  color: #364149;
+}
+
+.book .book-summary ul.summary {
+  list-style: none;
+  margin: 0;
+  padding: 20px 0;
+}
+
+.book .book-summary li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.book .book-summary li a {
+  display: block;
+  padding: 8px 20px;
+  color: #364149;
+  text-decoration: none;
+  line-height: 1.4;
+  border-bottom: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.book .book-summary li a:hover {
+  background-color: #f3f3f3;
+  color: #008cff;
+}
+
+.book .book-summary li.active > a {
+  color: #008cff;
+  background-color: #f3f3f3;
+  font-weight: 600;
+}
+
+.book .book-summary li a:before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  background-size: contain;
+  vertical-align: middle;
+}
+
+/* Icon replacements */
+.book .book-summary li a[href$=".html"]:before {
+  content: "\f15c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #7e888b;
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+.book .book-summary li.chapter a:before {
+  content: "\f02d";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #7e888b;
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+.book .book-summary li.part a:before {
+  content: "\f07b";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #7e888b;
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+/* Fix main content area */
+.book .book-body {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 300px;
+  bottom: 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.book .book-body .body-inner {
+  position: relative;
+  min-height: 100%;
+  padding: 20px 40px 40px;
+  max-width: none;
+}
+
+.book .book-body .navigation {
+  position: absolute;
+  top: 50%;
+  margin-top: -25px;
+  width: 40px;
+  height: 50px;
+  background: #fafafa;
+  border: 1px solid #e7e7e7;
+  border-radius: 4px;
+  text-align: center;
+  line-height: 50px;
+  color: #364149;
+  text-decoration: none;
+  font-size: 20px;
+}
+
+.book .book-body .navigation:hover {
+  background: #f3f3f3;
+  color: #008cff;
+}
+
+.book .book-body .navigation.navigation-prev {
+  left: 20px;
+}
+
+.book .book-body .navigation.navigation-next {
+  right: 20px;
+}
+
+/* Replace navigation icons */
+.navigation.navigation-prev:before {
+  content: "\f104";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+.navigation.navigation-next:before {
+  content: "\f105"; 
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+/* Header styling */
+.book .book-header {
+  overflow: visible;
+  height: 50px;
+  padding: 0 8px;
+  z-index: 2;
+  font-size: 12px;
+  color: #7e888b;
+  background: transparent;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+/* Responsive design */
+@media (max-width: 1240px) {
+  .book .book-summary {
+    position: fixed;
+    left: -300px;
+    transition: left 0.25s ease;
+  }
+  
+  .book .book-summary.open {
+    left: 0;
+  }
+  
+  .book .book-body {
+    left: 0;
+  }
+  
+  .book .book-body .body-inner {
+    padding-top: 70px;
+  }
+}
+
+/* Search styling */
+.book .book-summary #book-search-input {
+  width: calc(100% - 40px);
+  margin: 20px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+}
+
+/* Fix common GitBook icons */
+.fa:before,
+[class*="fa-"]:before {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+/* Content area improvements */
+.markdown-section {
+  max-width: none;
+  padding: 0;
+}
+
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section h5,
+.markdown-section h6 {
+  color: #2c3e50;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.markdown-section h1 {
+  font-size: 2.2em;
+  border-bottom: 1px solid #e7e7e7;
+  padding-bottom: 0.3em;
+}
+
+.markdown-section h2 {
+  font-size: 1.8em;
+  border-bottom: 1px solid #e7e7e7;
+  padding-bottom: 0.3em;
+}
+
+.markdown-section code {
+  background: #f8f8f8;
+  border: 1px solid #e7e7e7;
+  border-radius: 3px;
+  padding: 2px 4px;
+  color: #e96900;
+  font-size: 0.85em;
+}
+
+.markdown-section pre {
+  background: #f8f8f8;
+  border: 1px solid #e7e7e7;
+  border-radius: 4px;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.markdown-section blockquote {
+  border-left: 4px solid #dfe2e5;
+  padding: 0 1em;
+  color: #6a737d;
+  margin: 1em 0;
+}
+
+/* Hint styling to match GitBook.io */
+.markdown-section blockquote {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+}
