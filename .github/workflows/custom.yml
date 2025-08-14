@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch:  # ✅ Enables the "Run workflow" button
 
 jobs:
   build:
@@ -14,21 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Updated from Node 10 (EOL) to 16 LTS
+          node-version: '10'
 
       - name: Install GitBook CLI
-        run: |
-          npm install -g gitbook-cli
-          gitbook fetch latest
-
-      - name: Fix hint tags automatically  # 👈 NEW STEP
-        run: |
-          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/> **Note**: /g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
-          echo "Hint tags replaced successfully"
+        run: npm install -g gitbook-cli
 
       - name: Install GitBook plugins
         run: gitbook install
