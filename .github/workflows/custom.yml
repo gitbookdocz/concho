@@ -21,19 +21,59 @@ jobs:
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install gitbook-plugin-advanced-emoji --save
+          npm install gitbook-plugin-hints gitbook-plugin-theme-comscore --save
 
-      - name: Auto-fix all content issues
+      - name: Setup GitBook configuration
         run: |
-          # 1. Convert embed tags to iframes
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/<iframe src="\1" width="100%" height="500px"><\/iframe>/g' {} \;
+          # Create minimal book.json without github plugin
+          echo '{
+            "plugins": ["hints", "theme-comscore"],
+            "pluginsConfig": {
+              "hints": {
+                "info": "💡",
+                "warning": "⚠️",
+                "danger": "❌"
+              }
+            }
+          }' > book.json
+
+          # Create exact GitBook.io styling
+          mkdir -p styles
+          cat << 'EOF' > styles/website.css
+          /* Exact GitBook.io sidebar styling */
+          .book .book-summary {
+            width: 300px;
+            background: #f7f7f7;
+            border-right: 1px solid #eaeaea;
+          }
           
-          # 2. Convert hint tags
-          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/::: tip/g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endhint %}/:::/g' {} \;
+          /* GitBook.io icon styling */
+          .book .book-summary ul.summary li a:before {
+            content: "•";
+            margin-right: 10px;
+            color: #7e888b;
+          }
           
-          # 3. Convert icons to emoji
-          find . -name "*.md" -exec sed -i 's/icon:\([a-z-]\+\)/🔹/g' {} \;
+          /* Content area matching GitBook.io */
+          .book .book-body {
+            color: #3c484e;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+          }
+          EOF
+
+      - name: Convert all legacy syntax
+        run: |
+          # 1. Convert embed tags to simple links
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+          
+          # 2. Convert hint tags to emoji blocks
+          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/💡 /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% hint style="warning" %}/⚠️ /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
+          
+          # 3. Remove unsupported icon syntax
+          find . -name "*.md" -exec sed -i 's/icon:[a-z-]*//g' {} \;
 
       - name: Build and deploy
         run: |
