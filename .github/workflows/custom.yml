@@ -12,14 +12,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Validate and fix YAML
-        run: |
-          # Fix README.md YAML
-          sed -i '1s/^/---\n/' README.md
-          sed -i '2s/^/title: Documentation\n/' README.md
-          sed -i '3s/^/cover: .gitbook\/assets\/Xcop.jpg\n/' README.md
-          sed -i '4s/^/---\n/' README.md
-
       - name: Setup Node.js 10
         uses: actions/setup-node@v3
         with:
@@ -30,15 +22,56 @@ jobs:
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
 
-      - name: Fix content issues
+      - name: Create error-free configuration
         run: |
-          # Fix embed tags
-          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[Embedded Content](\1)/g' {} \;
+          # Minimal book.json without github plugin
+          cat << 'EOF' > book.json
+          {
+            "title": "Your Documentation",
+            "plugins": ["hints", "search", "fontsettings"],
+            "pluginsConfig": {
+              "hints": {
+                "info": "ℹ️",
+                "warning": "⚠️", 
+                "danger": "❌"
+              }
+            }
+          }
+          EOF
+
+          # Fix README.md YAML
+          sed -i '1s/^/---\ntitle: Documentation\ncover: .gitbook\/assets\/Xcop.jpg\n---\n/' README.md
+
+      - name: Apply all content fixes
+        run: |
+          # 1. Convert embeds to links
+          find . -name "*.md" -exec sed -i 's/{% embed url="\([^"]*\)" %}/[View Content](\1)/g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
 
-          # Fix hint tags
-          find . -name "*.md" -exec sed -i 's/{% hint style=".*" %}/> **Note**: /g' {} \;
+          # 2. Convert hints to callouts
+          find . -name "*.md" -exec sed -i 's/{% hint style="info" %}/> **ℹ️ Note**: /g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% hint style="warning" %}/> **⚠️ Warning**: /g' {} \;
           find . -name "*.md" -exec sed -i 's/{% endhint %}//g' {} \;
+
+          # 3. Remove icon syntax
+          find . -name "*.md" -exec sed -i 's/icon:[a-z-]*//g' {} \;
+
+      - name: Add GitBook.io styling
+        run: |
+          mkdir -p .gitbook
+          cat << 'EOF' > .gitbook/website.css
+          /* Exact GitBook.io styling */
+          .book .book-summary {
+            width: 300px;
+            background: #f7f7f7;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          }
+          .book .book-summary li a:before {
+            content: "•";
+            color: #7e888b;
+            margin-right: 10px;
+          }
+          EOF
 
       - name: Build and deploy
         run: |
