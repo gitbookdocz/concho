@@ -17,94 +17,50 @@ jobs:
         with:
           node-version: '10'
 
-      - name: Install GitBook with FontAwesome
+      - name: Install GitBook
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.3
-          npm install gitbook-plugin-fontawesome --save
           npm install replace-in-file --save
 
-      - name: Auto-replace all icons
+      - name: Auto-replace icons with FontAwesome
         run: |
-          # Install icon detection tools
-          sudo apt-get install -y python3 python3-pip
-          pip3 install beautifulsoup4
+          # Install FontAwesome CSS
+          mkdir -p .gitbook
+          echo '@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");' > .gitbook/website.css
 
-          # Create auto-replacer script
-          cat << 'EOF' > icon_replacer.py
-          import os
-          import re
-          from bs4 import BeautifulSoup
-
-          def detect_and_replace(file_path):
-              with open(file_path, 'r+') as f:
-                  content = f.read()
-                  
-                  # Convert icon: syntax to <i> tags
-                  content = re.sub(
-                      r'icon:([a-z-]+)',
-                      r'<i class="fas fa-\1"></i>',
-                      content
-                  )
-                  
-                  # Update GitBook.io icon classes
-                  soup = BeautifulSoup(content, 'html.parser')
-                  for el in soup.find_all(class_=re.compile('icon-|fa-')):
-                      classes = el.get('class', [])
-                      new_classes = []
-                      for c in classes:
-                          if c.startswith('icon-'):
-                              new_classes.append('fas fa-' + c[5:])
-                          elif c.startswith('fa-'):
-                              new_classes.append('fas ' + c)
-                          else:
-                              new_classes.append(c)
-                      el['class'] = new_classes
-                  
-                  f.seek(0)
-                  f.write(str(soup))
-                  f.truncate()
-
-          for root, _, files in os.walk('.'):
-              for file in files:
-                  if file.endswith('.md'):
-                      detect_and_replace(os.path.join(root, file))
-          EOF
-
-          # Run the replacer
-          python3 icon_replacer.py
-
-          # Fallback for simple replacements
+          # Replace all icon patterns
           npx replace-in-file --configFile=<(echo '{
             "files": "**/*.md",
             "from": /icon:([a-z-]+)/g,
             "to": "<i class=\"fas fa-$1\"></i>"
           }')
 
+          # Additional common replacements
+          npx replace-in-file --configFile=<(echo '{
+            "files": "**/*.md",
+            "from": [
+              /Icon: projector/g,
+              /icon-projector/g
+            ],
+            "to": [
+              "<i class=\"fas fa-projector\"></i>",
+              "<i class=\"fas fa-projector\"></i>"
+            ]
+          }')
+
       - name: Configure GitBook
         run: |
           cat << 'EOF' > book.json
           {
-            "plugins": ["fontawesome", "hints"],
+            "plugins": ["hints"],
             "pluginsConfig": {
-              "fontawesome": {
-                "include": "all"
-              },
               "hints": {
-                "info": "fas fa-info-circle",
-                "warning": "fas fa-exclamation-triangle",
-                "danger": "fas fa-times-circle"
+                "info": "ℹ️",
+                "warning": "⚠️",
+                "danger": "❌"
               }
             }
-          }
-          EOF
-
-          cat << 'EOF' > .gitbook/website.css
-          @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
-          .book .book-summary ul.summary li i {
-            display: inline-block !important;
-            width: 20px;
-            margin-right: 8px;
           }
           EOF
 
