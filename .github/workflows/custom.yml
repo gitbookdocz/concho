@@ -31,6 +31,13 @@ jobs:
           npm --version
           gitbook --version
 
+      - name: Remove or replace embed tags
+        run: |
+          # Replace YouTube embeds with iframe, remove others
+          find . -name "*.md" -exec sed -i -E 's/{% embed url="https:\/\/(www\.)?youtube\.com\/watch\?v=([^"]+)" %}/<iframe width="560" height="315" src="https:\/\/www.youtube.com\/embed\/\2" frameborder="0" allowfullscreen><\/iframe>/g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% embed [^%]+%}//g' {} \;
+          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+
       - name: Create book.json with proper config
         run: |
           cat << 'EOF' > book.json
@@ -48,7 +55,21 @@ jobs:
             }
           }
           EOF
-          
+
+      - name: Generate dynamic icon CSS
+        run: |
+          # Create a mapping of filenames to Font Awesome icons
+          echo "" > icon_mappings.txt
+          for file in $(find . -name "*.md" -type f); do
+            filename=$(basename "$file" .md)
+            case "$filename" in
+              "support-service") icon="\\f3cd";; # Headset
+              "images-and-media") icon="\\f03e";; # Image
+              *) icon="\\f15c";; # Default: File
+            esac
+            echo "a[href*=\"${filename}.html\"]:before { content: \"${icon}\" !important; font-family: \"Font Awesome 6 Free\" !important; font-weight: 900 !important; margin-right: 8px !important; color: #7e888b !important; }" >> icon_mappings.txt
+          done
+
       - name: Create styles directory and CSS
         run: |
           mkdir -p styles
@@ -109,15 +130,6 @@ jobs:
             font-weight: 900 !important;
           }
           
-          /* Add icons to navigation */
-          .book .book-summary li a:before {
-            content: "\f15c" !important;
-            font-family: "Font Awesome 6 Free" !important;
-            font-weight: 900 !important;
-            margin-right: 8px !important;
-            color: #7e888b !important;
-          }
-          
           /* Mobile responsive */
           @media (max-width: 1240px) {
             .book .book-summary {
@@ -134,6 +146,8 @@ jobs:
             }
           }
           EOF
+          # Append dynamic icon mappings
+          cat icon_mappings.txt >> styles/website.css
           
       - name: Add mobile toggle script
         run: |
