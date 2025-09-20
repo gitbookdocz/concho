@@ -11,23 +11,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Setup Node.js 10
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '10'
-          
+          node-version: '16'
+
       - name: Install GitBook
         run: |
           npm install -g gitbook-cli
           gitbook fetch 3.2.2
-          
+
       - name: Create book.json with proper config
         run: |
           cat << 'EOF' > book.json
           {
             "title": "Your Documentation",
-            "plugins": ["-search", "fontsettings", "theme-default"],
+            "plugins": ["-search", "-lunr", "-sharing", "fontsettings", "theme-default"],
+            "styles": {
+              "website": "styles/website.css"
+            },
             "pluginsConfig": {
               "fontsettings": {
                 "theme": "white"
@@ -35,14 +38,14 @@ jobs:
             }
           }
           EOF
-          
+
       - name: Create styles directory and CSS
         run: |
           mkdir -p styles
           cat << 'EOF' > styles/website.css
           /* Import Font Awesome */
-          @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-          
+          @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css');
+
           /* Force sidebar to show */
           .book .book-summary {
             position: fixed !important;
@@ -56,7 +59,7 @@ jobs:
             z-index: 1000 !important;
             display: block !important;
           }
-          
+
           .book .book-body {
             position: absolute !important;
             top: 0 !important;
@@ -65,37 +68,37 @@ jobs:
             bottom: 0 !important;
             overflow-y: auto !important;
           }
-          
+
           .book .book-summary ul.summary {
             list-style: none !important;
             margin: 0 !important;
             padding: 20px 0 !important;
           }
-          
+
           .book .book-summary li a {
             display: block !important;
             padding: 8px 20px !important;
             color: #364149 !important;
             text-decoration: none !important;
           }
-          
+
           .book .book-summary li a:hover {
             background: #f3f3f3 !important;
             color: #008cff !important;
           }
-          
+
           .book .book-summary li.active > a {
             color: #008cff !important;
             background: #f3f3f3 !important;
             font-weight: 600 !important;
           }
-          
+
           /* Fix icons */
           .fa, [class^="fa-"], [class*=" fa-"] {
             font-family: "Font Awesome 6 Free" !important;
             font-weight: 900 !important;
           }
-          
+
           /* Add icons to navigation */
           .book .book-summary li a:before {
             content: "\f15c" !important;
@@ -104,64 +107,67 @@ jobs:
             margin-right: 8px !important;
             color: #7e888b !important;
           }
-          
+
           /* Mobile responsive */
           @media (max-width: 1240px) {
             .book .book-summary {
               left: -300px !important;
               transition: left 0.3s ease !important;
             }
-            
+
             .book .book-summary.mobile-open {
               left: 0 !important;
             }
-            
+
             .book .book-body {
               left: 0 !important;
             }
           }
           EOF
-          
+
       - name: Add mobile toggle script
         run: |
           mkdir -p assets
           cat << 'EOF' > assets/mobile.js
           window.addEventListener('load', function() {
             console.log('Mobile script loaded');
-            
+            console.log('Sidebar element:', document.querySelector('.book-summary'));
+
             // Add mobile toggle button
             if (window.innerWidth <= 1240) {
               var toggleBtn = document.createElement('button');
               toggleBtn.innerHTML = '☰';
               toggleBtn.style.cssText = 'position: fixed; top: 10px; left: 10px; z-index: 2000; background: #fff; border: 1px solid #ccc; padding: 10px; cursor: pointer; border-radius: 4px;';
-              
+
               toggleBtn.addEventListener('click', function() {
                 var summary = document.querySelector('.book-summary');
                 if (summary) {
                   summary.classList.toggle('mobile-open');
                 }
               });
-              
+
               document.body.appendChild(toggleBtn);
             }
           });
           EOF
-          
+
       - name: Build GitBook
         run: |
           gitbook install
           gitbook build
-          
+
       - name: Add scripts to HTML files
         run: |
-          # Add Font Awesome and mobile script to all HTML files
-          find ./_book -name "*.html" -exec sed -i 's|</head>|<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><script src="assets/mobile.js"></script></head>|g' {} \;
-          
-          # Copy mobile script to _book
+          find ./_book -name "*.html" -exec sed -i 's|</head>|<link rel="stylesheet" href="/styles/website.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" /><script src="/assets/mobile.js"></script></head>|g' {} \;
           cp assets/mobile.js ./_book/assets/mobile.js
-          
+          cp styles/website.css ./_book/styles/website.css
+
+      - name: Debug file structure
+        run: ls -R ./_book
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_book
+          keep_files: false
