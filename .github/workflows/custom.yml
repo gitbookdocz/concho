@@ -30,7 +30,8 @@ jobs:
             "plugins": [
               "-search", 
               "fontsettings", 
-              "theme-default"
+              "theme-default",
+              "hints"
             ],
             "pluginsConfig": {
               "fontsettings": {
@@ -39,6 +40,12 @@ jobs:
             }
           }
           EOF
+          
+      - name: Preprocess markdown files
+        run: |
+          find . -name "*.md" -type f -exec sed -i 's/{% hint style="$$[^"]*$$" %}/> **\U\1:** /g' {} \;
+          find . -name "*.md" -type f -exec sed -i 's/{% hint %}/> **INFO:** /g' {} \;
+          find . -name "*.md" -type f -exec sed -i 's/{% endhint %}/\n/g' {} \;
           
       - name: Build GitBook
         run: |
