@@ -36,11 +36,15 @@ jobs:
           cat << 'EOF' > book.json
           {
             "title": "Your Documentation",
-            "plugins": ["-search", "fontsettings", "theme-default"],
+            "plugins": ["-search", "-lunr", "fontsettings", "theme-default", "hints"],
+            "styles": {
+              "website": "styles/website.css"
+            },
             "pluginsConfig": {
               "fontsettings": {
                 "theme": "white"
-              }
+              },
+              "hints": {}
             }
           }
           EOF
@@ -137,6 +141,7 @@ jobs:
           cat << 'EOF' > assets/mobile.js
           window.addEventListener('load', function() {
             console.log('Mobile script loaded');
+            console.log('Sidebar element:', document.querySelector('.book-summary'));
             
             // Add mobile toggle button
             if (window.innerWidth <= 1240) {
@@ -156,21 +161,24 @@ jobs:
           });
           EOF
           
+      - name: Install GitBook plugins
+        run: gitbook install
+          
       - name: Build GitBook
-        run: |
-          gitbook install
-          gitbook build
+        run: gitbook build
           
       - name: Add scripts to HTML files
         run: |
-          # Add Font Awesome and mobile script to all HTML files
-          find ./_book -name "*.html" -exec sed -i 's|</head>|<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><script src="assets/mobile.js"></script></head>|g' {} \;
-          
-          # Copy mobile script to _book
+          find ./_book -name "*.html" -exec sed -i 's|</head>|<link rel="stylesheet" href="/styles/website.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><script src="/assets/mobile.js"></script></head>|g' {} \;
           cp assets/mobile.js ./_book/assets/mobile.js
+          cp styles/website.css ./_book/styles/website.css
+          
+      - name: Debug file structure
+        run: ls -R ./_book
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_book
+          keep_files: false
