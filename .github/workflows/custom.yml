@@ -22,6 +22,33 @@ jobs:
           npm install -g gitbook-cli
           gitbook fetch 3.2.2
           
+      - name: Validate and create missing files
+        run: |
+          # Create SUMMARY.md if it doesn't exist
+          if [ ! -f "SUMMARY.md" ]; then
+            echo "# Summary" > SUMMARY.md
+            echo "" >> SUMMARY.md
+            for file in *.md; do
+              if [ "$file" != "README.md" ] && [ "$file" != "SUMMARY.md" ]; then
+                title=$(echo "$file" | sed 's/\.md$//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                echo "* [$title]($file)" >> SUMMARY.md
+              fi
+            done
+          fi
+          
+          # Check for missing files referenced in SUMMARY.md
+          if [ -f "SUMMARY.md" ]; then
+            grep -o '\[.*\]($$.*\.md$$)' SUMMARY.md | sed 's/.*($$.*\.md$$).*/\1/' | while read file; do
+              if [ ! -f "$file" ]; then
+                echo "Creating missing file: $file"
+                title=$(echo "$file" | sed 's/\.md$//' | sed 's/-/ /g' | sed 's/\b\w/\U&/g')
+                echo "# $title" > "$file"
+                echo "" >> "$file"
+                echo "This page is under construction." >> "$file"
+              fi
+            done
+          fi
+          
       - name: Create book.json with icon plugins
         run: |
           cat << 'EOF' > book.json
@@ -30,8 +57,7 @@ jobs:
             "plugins": [
               "-search", 
               "fontsettings", 
-              "theme-default",
-              "hints"
+              "theme-default"
             ],
             "pluginsConfig": {
               "fontsettings": {
@@ -47,10 +73,47 @@ jobs:
           find . -name "*.md" -type f -exec sed -i 's/{% hint %}/> **INFO:** /g' {} \;
           find . -name "*.md" -type f -exec sed -i 's/{% endhint %}/\n/g' {} \;
           
+          # Remove any remaining liquid template tags that might cause errors
+          find . -name "*.md" -type f -exec sed -i 's/{%[^%]*%}//g' {} \;
+          find . -name "*.md" -type f -exec sed -i 's/{{[^}]*}}//g' {} \;
+          
+      - name: Add Font Awesome and custom styles
+        run: |
+          mkdir -p styles
+          cat << 'EOF' > styles/website.css
+          @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+          
+          /* Icon replacements */
+          .markdown-section h1:before,
+          .markdown-section h2:before,
+          .markdown-section h3:before {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 8px;
+          }
+          
+          /* Custom blockquote styling for hints */
+          .markdown-section blockquote {
+            border-left: 4px solid #007acc;
+            background: #f8f9fa;
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+          }
+          
+          .markdown-section blockquote p:first-child {
+            margin-top: 0;
+          }
+          
+          .markdown-section blockquote p:last-child {
+            margin-bottom: 0;
+          }
+          EOF
+          
       - name: Build GitBook
         run: |
-          gitbook install
-          gitbook build
+          gitbook install --verbose
+          gitbook build --verbose
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
