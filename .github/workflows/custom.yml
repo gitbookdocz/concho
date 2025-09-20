@@ -31,12 +31,20 @@ jobs:
           npm --version
           gitbook --version
 
-      - name: Remove or replace embed tags
+      - name: Debug Markdown files
         run: |
-          # Replace YouTube embeds with iframe, remove others
+          echo "Checking Markdown files for GitBook tags..."
+          find . -name "*.md" -exec grep -H "{%.*%}" {} \;
+
+      - name: Remove or replace GitBook tags
+        run: |
+          # Replace YouTube embeds with iframe
           find . -name "*.md" -exec sed -i -E 's/{% embed url="https:\/\/(www\.)?youtube\.com\/watch\?v=([^"]+)" %}/<iframe width="560" height="315" src="https:\/\/www.youtube.com\/embed\/\2" frameborder="0" allowfullscreen><\/iframe>/g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% embed [^%]+%}//g' {} \;
-          find . -name "*.md" -exec sed -i 's/{% endembed %}//g' {} \;
+          # Remove all other {% ... %} tags, preserving content between
+          find . -name "*.md" -exec sed -i -E 's/{% (embed|hint|tabs|tab)[^%]*%}//g' {} \;
+          find . -name "*.md" -exec sed -i -E 's/{% end(embed|hint|tabs|tab) %}//g' {} \;
+          # Remove any remaining unknown {% ... %} tags
+          find . -name "*.md" -exec sed -i -E 's/{% [^%]+%}//g' {} \;
 
       - name: Create book.json with proper config
         run: |
@@ -65,6 +73,7 @@ jobs:
             case "$filename" in
               "support-service") icon="\\f3cd";; # Headset
               "images-and-media") icon="\\f03e";; # Image
+              "how-to-install-theme") icon="\\f1b3";; # Puzzle piece (for themes)
               *) icon="\\f15c";; # Default: File
             esac
             echo "a[href*=\"${filename}.html\"]:before { content: \"${icon}\" !important; font-family: \"Font Awesome 6 Free\" !important; font-weight: 900 !important; margin-right: 8px !important; color: #7e888b !important; }" >> icon_mappings.txt
